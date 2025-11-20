@@ -13,7 +13,7 @@ function saveCourses() {
     localStorage.setItem("courseData", JSON.stringify(courseData));
 }
 
-// ---------- 학생용 기능 ----------
+// ---------- 학생용 ----------
 function showCourses() {
     const grade = document.getElementById("studentGrade").value.trim();
     const cls = document.getElementById("studentClass").value.trim();
@@ -46,7 +46,7 @@ function showCourses() {
             <p>정원: ${course.limit}</p>
             <p>신청자: ${course.students.length}</p>
             <p>상태: ${status}</p>
-            <button class="btn-blue" ${status!=="신청 가능"?"disabled":""} onclick="applyCourse(${course.id},'${grade}','${cls}','${name}')">수강신청</button>
+            <button type="button" class="btn-blue" ${status!=="신청 가능"?"disabled":""} onclick="applyCourse(${course.id},'${grade}','${cls}','${name}')">수강신청</button>
         `;
         container.appendChild(box);
     });
@@ -65,7 +65,7 @@ function applyCourse(courseId, grade, cls, name) {
     course.students.push({grade, className:cls, name, time:new Date().toLocaleString()});
     saveCourses();
     alert("신청 완료!");
-    showCourses(); // 신청 후 목록 갱신
+    showCourses(); // 갱신
 }
 
 // ---------- 관리자 로그인 ----------

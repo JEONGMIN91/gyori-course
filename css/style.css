@@ -1,4 +1,4 @@
-/* --- 공통 --- */
+/* 공통 스타일 */
 body{
     font-family:"Noto Sans KR",sans-serif;
     background:#f5f7fa;
@@ -25,7 +25,7 @@ button{
 .btn-green{ background:#62c462; }
 .btn-red{ background:#e94e4e; }
 
-/* --- 학생용 강좌 박스 --- */
+/* 학생용 강좌 박스 */
 .course-grid{
     display:grid;
     grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
@@ -50,7 +50,7 @@ button{
     margin:4px 0;
 }
 
-/* --- 관리자 패널 --- */
+/* 관리자 패널 */
 .admin-panel{
     background:#fff;
     padding:15px;
@@ -67,7 +67,7 @@ button{
     font-size:14px;
 }
 
-/* --- 학생/관리자 입력 박스 --- */
+/* 입력 박스 */
 .student-box input{
     flex:1 1 30%;
     min-width:100px;
@@ -91,7 +91,7 @@ input{
     margin:3px;
 }
 
-/* --- 관리자 로그인/비밀번호 변경 --- */
+/* 로그인/비밀번호 변경 */
 .login-container{
     max-width:350px;
     margin:80px auto;
@@ -107,7 +107,7 @@ input{
     margin-bottom:10px;
 }
 
-/* --- 모바일 반응형 --- */
+/* 모바일 반응형 */
 @media(max-width:480px){
     .course-box h3{ font-size:16px; }
     .course-box p{ font-size:13px; }
