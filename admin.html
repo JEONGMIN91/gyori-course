@@ -4,29 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>관리자 페이지</title>
-<style>
-body{ font-family:"Noto Sans KR",sans-serif; background:#f5f7fa; padding:10px; margin:0;}
-.page-title{ text-align:center; font-size:28px; margin-bottom:20px;}
-button{ padding:12px 16px; border-radius:8px; cursor:pointer; border:none; font-weight:bold; color:#fff;}
-.btn-blue{background:#4a90e2;}
-.btn-green{background:#62c462;}
-.btn-red{background:#e94e4e;}
-.course-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:12px;}
-.course-box{ background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.15);}
-.course-box h3{ font-size:18px; margin-bottom:8px;}
-.course-box p{ font-size:14px; margin:4px 0;}
-.admin-panel{ background:#fff; padding:15px; border-radius:12px; margin-top:15px; box-shadow:0 2px 6px rgba(0,0,0,0.15);}
-.admin-list li{ background:#f1f1f1; padding:8px; margin-bottom:6px; border-radius:6px; font-size:14px;}
-.student-box input{ flex:1 1 30%; min-width:100px; padding:10px; border-radius:8px; border:1px solid #ccc; margin:3px;}
-.student-box{ display:flex; flex-wrap:wrap; justify-content:center; gap:5px;}
-input{ padding:8px; border-radius:6px; border:1px solid #ccc; margin:3px; }
-@media(max-width:480px){
-  .course-box h3{ font-size:16px; }
-  .course-box p{ font-size:13px; }
-  .student-box input{ flex:1 1 100%; }
-  .page-title{ font-size:24px; }
-}
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <h1 class="page-title">관리자 페이지</h1>
@@ -36,10 +14,8 @@ input{ padding:8px; border-radius:6px; border:1px solid #ccc; margin:3px; }
   <button class="btn-blue" onclick="goStudentPage()">학생용 화면</button>
 </div>
 
-<!-- 강좌 목록 -->
 <div id="adminCourseList" class="course-grid"></div>
 
-<!-- 과목 관리 -->
 <div class="admin-panel">
 <h2>강좌 관리</h2>
 <div class="student-box">
@@ -51,7 +27,6 @@ input{ padding:8px; border-radius:6px; border:1px solid #ccc; margin:3px; }
 </div>
 </div>
 
-<!-- 상세보기 및 학생 관리 -->
 <div id="adminCourseDetails" class="admin-panel" style="display:none;">
 <h2 id="adminCourseTitle"></h2>
 <p id="adminCourseDesc"></p>
@@ -78,106 +53,8 @@ input{ padding:8px; border-radius:6px; border:1px solid #ccc; margin:3px; }
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="js/script.js"></script>
 <script>
-// 초기 데이터
-let courseData = JSON.parse(localStorage.getItem("courseData") || '[]');
-let currentAdminCourse=null;
-
-// 저장
-function saveCourses(){ localStorage.setItem("courseData", JSON.stringify(courseData)); }
-
-// 관리자 버튼
-function logoutAdmin(){ alert("로그아웃 되었습니다."); location.href="admin-login.html"; }
-function goStudentPage(){ location.href="index.html"; }
-
-// 렌더
-function renderAdminList(){
-    const container=document.getElementById("adminCourseList");
-    container.innerHTML="";
-    courseData.forEach(course=>{
-        const box=document.createElement("div");
-        box.className="course-box";
-        box.innerHTML=`<h3>${course.title}</h3><p>정원: ${course.limit}</p><p>신청자 수: ${course.students.length}</p><button class="btn-blue" onclick="viewCourse(${course.id})">상세보기</button>`;
-        container.appendChild(box);
-    });
-}
-
-// 상세보기
-function viewCourse(id){
-    currentAdminCourse=courseData.find(c=>c.id===id);
-    document.getElementById("adminCourseDetails").style.display="block";
-    document.getElementById("adminCourseTitle").innerText=currentAdminCourse.title;
-    document.getElementById("adminCourseDesc").innerText=currentAdminCourse.desc;
-    document.getElementById("adminCourseLimit").innerText=currentAdminCourse.limit;
-    document.getElementById("adminCourseCount").innerText=currentAdminCourse.students.length;
-    renderStudentList();
-    document.getElementById("startTime").value=currentAdminCourse.startTime.replace(" ","T");
-    document.getElementById("endTime").value=currentAdminCourse.endTime.replace(" ","T");
-}
-
-// 신청자 목록 렌더
-function renderStudentList(){
-    const list=document.getElementById("adminStudentList");
-    list.innerHTML="";
-    currentAdminCourse.students.forEach(s=>{
-        const li=document.createElement("li");
-        li.innerText=`${s.grade}-${s.className} ${s.name} (${s.time})`;
-        list.appendChild(li);
-    });
-}
-
-// 수강신청 기간 저장
-function saveCourseTime(){
-    const start=document.getElementById("startTime").value;
-    const end=document.getElementById("endTime").value;
-    if(!start||!end){ alert("날짜와 시간을 모두 입력해주세요."); return;}
-    currentAdminCourse.startTime=start.replace("T"," ");
-    currentAdminCourse.endTime=end.replace("T"," ");
-    saveCourses();
-    alert("수강신청 기간이 저장되었습니다!");
-}
-
-// 학생 수동 추가
-function addStudentManual(){
-    const grade=document.getElementById("addGrade").value.trim();
-    const cls=document.getElementById("addClass").value.trim();
-    const name=document.getElementById("addName").value.trim();
-    if(!grade||!cls||!name){ alert("학년/반/학생명 입력 필요"); return; }
-    const exists=currentAdminCourse.students.some(s=>s.grade===grade && s.className===cls && s.name===name);
-    if(exists){ alert("이미 신청된 학생입니다."); return; }
-    const student={grade,className:cls,name:name,time:new Date().toLocaleString()};
-    currentAdminCourse.students.push(student);
-    saveCourses();
-    renderStudentList();
-    alert("학생 추가 완료!");
-}
-
-// 강좌 추가
-function addCourse(){
-    const title=document.getElementById("newCourseTitle").value.trim();
-    const desc=document.getElementById("newCourseDesc").value.trim();
-    const limit=parseInt(document.getElementById("newCourseLimit").value.trim());
-    const grades=document.getElementById("newCourseGrades").value.trim().split(",").map(g=>g.trim());
-    if(!title||!desc||!limit||grades.length===0){ alert("모든 필드 입력 필요"); return;}
-    const newId=courseData.length?Math.max(...courseData.map(c=>c.id))+1:1;
-    courseData.push({id:newId,title,desc,limit,grades,students:[],startTime:"2025-01-01 09:00",endTime:"2025-12-31 18:00"});
-    saveCourses();
-    renderAdminList();
-    alert("강좌 추가 완료!");
-}
-
-// 강좌 삭제
-function deleteCourse(){
-    if(!currentAdminCourse){ alert("삭제할 강좌를 선택해주세요."); return;}
-    if(confirm(`${currentAdminCourse.title}을 삭제하시겠습니까?`)){
-        courseData=courseData.filter(c=>c.id!==currentAdminCourse.id);
-        saveCourses();
-        document.getElementById("adminCourseDetails").style.display="none";
-        renderAdminList();
-    }
-}
-
-// 초기 렌더
 renderAdminList();
 </script>
 </body>

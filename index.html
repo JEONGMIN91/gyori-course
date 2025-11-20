@@ -4,27 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>교리초 수강신청</title>
-<style>
-body { font-family:"Noto Sans KR",sans-serif; background:#f5f7fa; margin:0; padding:15px;}
-.page-title { text-align:center; font-size:28px; margin-bottom:20px;}
-.student-box { display:flex; flex-wrap:wrap; justify-content:center; margin-bottom:20px; gap:10px;}
-.student-box input { flex:1 1 30%; min-width:120px; padding:12px; border-radius:8px; border:1px solid #ccc;}
-button { padding:12px 16px; border-radius:8px; cursor:pointer; border:none; font-weight:bold; color:#fff;}
-.btn-blue { background:#4a90e2; }
-.btn-red { background:#e94e4e; }
-.course-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:12px;}
-.course-box { background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
-.course-box h3 { margin-bottom:8px; font-size:18px;}
-.course-box p { margin:4px 0; font-size:14px;}
-.course-box button { width:100%; margin-top:8px; font-size:16px; }
-@media (max-width: 480px){
-  .student-box input { flex:1 1 100%; }
-  .page-title { font-size:24px; }
-  .course-box h3 { font-size:16px; }
-  .course-box p { font-size:13px; }
-  .course-box button { font-size:15px; padding:10px; }
-}
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <h1 class="page-title">수강신청</h1>
@@ -42,73 +22,9 @@ button { padding:12px 16px; border-radius:8px; cursor:pointer; border:none; font
 
 <div id="courseList" class="course-grid"></div>
 
+<script src="js/script.js"></script>
 <script>
-// 초기 과목 데이터
-let courseData = JSON.parse(localStorage.getItem("courseData") || `[
-{id:1,title:"음악 감상",desc:"다양한 음악 감상 활동",limit:5,grades:["1","2"],students:[],startTime:"2025-11-25 09:00",endTime:"2025-11-25 18:00"},
-{id:2,title:"과학 탐구",desc:"실험 중심의 과학 프로그램",limit:3,grades:["3","4"],students:[],startTime:"2025-11-20 09:00",endTime:"2025-11-20 18:00"}
-]`);
-
-function saveCourses(){
-    localStorage.setItem("courseData", JSON.stringify(courseData));
-}
-
-function showCourses(){
-  let grade = document.getElementById("studentGrade").value.trim();
-  const cls = document.getElementById("studentClass").value.trim();
-  const name = document.getElementById("studentName").value.trim();
-
-  if(!grade || !cls || !name){ alert("학년, 반, 학생명을 모두 입력해주세요."); return; }
-
-  // 숫자만 추출 (예: "1학년" -> "1")
-  grade = grade.replace(/\D/g,'');
-
-  const container = document.getElementById("courseList");
-  container.innerHTML="";
-  const now = new Date();
-
-  courseData.forEach(course=>{
-    if(!course.grades.includes(grade)) return; // 학년 매칭
-
-    const start=new Date(course.startTime);
-    const end=new Date(course.endTime);
-    let statusText="", buttonDisabled=false;
-    if(now<start){ statusText=`수강신청 준비중 (시작: ${course.startTime})`; buttonDisabled=true; }
-    else if(now>end){ statusText=`신청 마감 (마감: ${course.endTime})`; buttonDisabled=true; }
-    else{ statusText=`수강신청 가능 (${course.startTime} ~ ${course.endTime})`; }
-
-    const box=document.createElement("div");
-    box.className="course-box";
-    let studentCount=course.students.filter(s=>!s.waiting).length;
-    box.innerHTML=`<h3>${course.title}</h3>
-      <p>${course.desc}</p>
-      <p>정원: ${course.limit}</p>
-      <p>신청자 수: ${studentCount}</p>
-      <p style="font-weight:bold;">${statusText}</p>
-      <button class="btn-blue" onclick="applyCourse(${course.id}, '${grade}', '${cls}', '${name}')" ${buttonDisabled?"disabled":""}>수강신청</button>`;
-    container.appendChild(box);
-  });
-}
-
-function applyCourse(id, grade, cls, name){
-  const course = courseData.find(c=>c.id===id);
-  const exists = course.students.some(s=>s.grade===grade && s.className===cls && s.name===name);
-  if(exists){ alert("이미 신청된 학생입니다."); return; }
-
-  const student = {grade, className:cls, name:name, time:new Date().toLocaleString()};
-  if(course.students.filter(s=>!s.waiting).length < course.limit){ 
-    course.students.push(student); 
-    alert("수강신청 완료!"); 
-  } else { 
-    student.waiting = true; 
-    student.waitNum = course.students.filter(s=>s.waiting).length + 1; 
-    course.students.push(student); 
-    alert(`정원이 모두 찼습니다. 대기번호: ${student.waitNum}`); 
-  }
-
-  saveCourses();
-  showCourses();
-}
+initCourseData(); // 초기 과목 데이터 세팅
 </script>
 </body>
 </html>
