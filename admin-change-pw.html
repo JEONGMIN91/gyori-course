@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 비밀번호 변경</title>
+<style>
+body{ display:flex; justify-content:center; align-items:center; height:100vh; font-family:"Noto Sans KR",sans-serif; background:#f5f7fa; margin:0; padding:10px;}
+.login-container{ width:100%; max-width:320px; padding:25px; background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.2); text-align:center;}
+.login-container input{ width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ccc; font-size:16px; }
+button{ padding:12px 16px; border-radius:8px; cursor:pointer; border:none; font-weight:bold; color:#fff; background:#4a90e2; width:100%; font-size:16px;}
+</style>
+</head>
+<body>
+<div class="login-container">
+<h2>관리자 비밀번호 변경</h2>
+<input type="password" id="oldPw" placeholder="기존 비밀번호">
+<input type="password" id="newPw" placeholder="새 비밀번호">
+<button onclick="changePw()">변경</button>
+</div>
+<script>
+function changePw(){
+    const oldPw=document.getElementById("oldPw").value.trim();
+    const newPw=document.getElementById("newPw").value.trim();
+    const savedPw=localStorage.getItem("adminPw")||"1234";
+    if(oldPw!==savedPw){ alert("기존 비밀번호가 틀렸습니다."); return; }
+    if(!newPw){ alert("새 비밀번호를 입력해주세요."); return; }
+    localStorage.setItem("adminPw",newPw);
+    alert("비밀번호가 변경되었습니다.");
+}
+</script>
+</body>
+</html>
