@@ -1,187 +1,120 @@
-// ---------- 초기 강좌 데이터 ----------
-let courseData = JSON.parse(localStorage.getItem("courseData") || '[]');
-if(courseData.length === 0){
-    courseData = [
-        {id:1, title:"음악 감상", desc:"다양한 음악 감상 활동", limit:5, grades:["1","2"], students:[], startTime:"2025-11-25 09:00", endTime:"2025-11-25 18:00"},
-        {id:2, title:"과학 탐구", desc:"실험 중심의 과학 프로그램", limit:3, grades:["3","4"], students:[], startTime:"2025-11-20 09:00", endTime:"2025-11-20 18:00"}
-    ];
-    localStorage.setItem("courseData", JSON.stringify(courseData));
+// Firebase 초기화
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+/* =====================
+   학생용 기능
+===================== */
+
+// 학생 로그인 후 localStorage 저장
+function studentLogin(grade, classNum, name){
+    localStorage.setItem("studentInfo", JSON.stringify({grade, classNum, name}));
+    window.location.href = "courses.html";
 }
 
-// ---------- 공용 저장 ----------
-function saveCourses() {
-    localStorage.setItem("courseData", JSON.stringify(courseData));
-}
+// 학생용: 해당 학년 과목 표시
+function showCourses(){
+    const studentInfo = JSON.parse(localStorage.getItem("studentInfo"));
+    if(!studentInfo){ alert("로그인 정보 없음"); window.location.href="index.html"; return; }
+    
+    const listDiv = document.getElementById("courseList");
+    listDiv.innerHTML = "";
 
-// ---------- 학생용 ----------
-function showCourses() {
-    const grade = document.getElementById("studentGrade").value.trim();
-    const cls = document.getElementById("studentClass").value.trim();
-    const name = document.getElementById("studentName").value.trim();
-
-    if(!grade || !cls || !name){
-        alert("학년/반/학생명 입력 필요");
-        return;
-    }
-
-    const container = document.getElementById("courseList");
-    container.innerHTML = "";
-    const now = new Date();
-
-    courseData.forEach(course => {
-        if(!course.grades.includes(grade)) return;
-
-        const start = new Date(course.startTime);
-        const end = new Date(course.endTime);
-        let status = "";
-        if(now < start) status = "신청 전";
-        else if(now > end) status = "마감";
-        else status = "신청 가능";
-
-        const box = document.createElement("div");
-        box.className = "course-box";
-        box.innerHTML = `
-            <h3>${course.title}</h3>
-            <p>${course.desc}</p>
-            <p>정원: ${course.limit}</p>
-            <p>신청자: ${course.students.length}</p>
-            <p>상태: ${status}</p>
-            <button type="button" class="btn-blue" ${status!=="신청 가능"?"disabled":""} onclick="applyCourse(${course.id},'${grade}','${cls}','${name}')">수강신청</button>
-        `;
-        container.appendChild(box);
+    db.ref("courses").once("value").then(snapshot=>{
+        const courses = snapshot.val();
+        for(const courseId in courses){
+            const course = courses[courseId];
+            if(course.grade.includes(Number(studentInfo.grade))){
+                const btn = document.createElement("button");
+                btn.textContent = `${course.name} (${course.currentStudents}/${course.maxStudents})`;
+                btn.onclick = () => applyCourse(courseId);
+                listDiv.appendChild(btn);
+                listDiv.appendChild(document.createElement("br"));
+            }
+        }
     });
 }
 
-function applyCourse(courseId, grade, cls, name) {
-    const course = courseData.find(c => c.id === courseId);
-    if(course.students.length >= course.limit) {
-        alert("정원 마감");
-        return;
-    }
-    if(course.students.some(s => s.grade===grade && s.className===cls && s.name===name)) {
-        alert("이미 신청했습니다");
-        return;
-    }
-    course.students.push({grade, className:cls, name, time:new Date().toLocaleString()});
-    saveCourses();
-    alert("신청 완료!");
-    showCourses(); // 갱신
-}
-
-// ---------- 관리자 로그인 ----------
-function adminLogin() {
-    const pw = document.getElementById("adminPassword").value;
-    const saved = localStorage.getItem("adminPw") || "1234";
-    if(pw === saved) location.href = "admin.html";
-    else alert("비밀번호 틀림");
-}
-
-// ---------- 관리자 페이지 ----------
-let currentAdminCourse = null;
-
-function renderAdminList() {
-    const container = document.getElementById("adminCourseList");
-    if(!container) return;
-    container.innerHTML = "";
-    courseData.forEach(course => {
-        const box = document.createElement("div");
-        box.className = "course-box";
-        box.innerHTML = `
-            <h3>${course.title}</h3>
-            <p>정원: ${course.limit}</p>
-            <p>신청자 수: ${course.students.length}</p>
-            <button class="btn-blue" onclick="viewCourse(${course.id})">상세보기</button>
-        `;
-        container.appendChild(box);
+// 학생용: 수강신청
+function applyCourse(courseId){
+    const studentInfo = JSON.parse(localStorage.getItem("studentInfo"));
+    const courseRef = db.ref("courses/" + courseId);
+    courseRef.once("value").then(snap=>{
+        const course = snap.val();
+        if(course.currentStudents >= course.maxStudents){
+            alert("정원 초과. 대기자로 등록됩니다.");
+        }
+        const newAppRef = db.ref("applications").push();
+        newAppRef.set({
+            grade: studentInfo.grade,
+            class: studentInfo.classNum,
+            name: studentInfo.name,
+            courseId: courseId,
+            timestamp: Date.now()
+        });
+        courseRef.update({currentStudents: course.currentStudents + 1});
+        alert("수강신청 완료!");
     });
 }
 
-function viewCourse(id) {
-    currentAdminCourse = courseData.find(c => c.id === id);
-    document.getElementById("adminCourseDetails").style.display = "block";
-    document.getElementById("adminCourseTitle").innerText = currentAdminCourse.title;
-    document.getElementById("adminCourseDesc").innerText = currentAdminCourse.desc;
-    document.getElementById("adminCourseLimit").innerText = currentAdminCourse.limit;
-    document.getElementById("adminCourseCount").innerText = currentAdminCourse.students.length;
-    renderStudentList();
-    document.getElementById("startTime").value = currentAdminCourse.startTime.replace(" ","T");
-    document.getElementById("endTime").value = currentAdminCourse.endTime.replace(" ","T");
+/* =====================
+   관리자 로그인
+===================== */
+function adminLogin(email, pw){
+    auth.signInWithEmailAndPassword(email, pw)
+        .then(()=>window.location.href="admin.html")
+        .catch(err=>alert(err.message));
 }
 
-function renderStudentList() {
-    const list = document.getElementById("adminStudentList");
-    if(!list) return;
-    list.innerHTML = "";
-    currentAdminCourse.students.forEach(s => {
-        const li = document.createElement("li");
-        li.innerText = `${s.grade}-${s.className} ${s.name} (${s.time})`;
-        list.appendChild(li);
+function logout(){
+    auth.signOut().then(()=>window.location.href='admin-login.html');
+}
+
+/* =====================
+   관리자 기능
+===================== */
+function addCourse(name, max, gradeArr){
+    if(!name || !max || gradeArr.length==0){ alert("모두 입력해주세요"); return; }
+    db.ref("courses").push({
+        name,
+        maxStudents: max,
+        grade: gradeArr.map(Number),
+        currentStudents:0
+    });
+    alert("과목 추가 완료");
+}
+
+// 월별 출석부 생성
+function generateMonthlyReport(month){
+    db.ref("applications").once("value").then(snap=>{
+        const apps = snap.val();
+        const reportDiv = document.getElementById("report");
+        reportDiv.innerHTML = "<table border='1'><tr><th>학년</th><th>반</th><th>이름</th><th>과목</th><th>비고</th></tr>";
+        for(const appId in apps){
+            const app = apps[appId];
+            const date = new Date(app.timestamp);
+            if(date.getMonth()+1 == month){
+                db.ref("courses/"+app.courseId).once("value").then(csnap=>{
+                    const course = csnap.val();
+                    reportDiv.innerHTML += `<tr>
+                        <td>${app.grade}</td>
+                        <td>${app.class}</td>
+                        <td>${app.name}</td>
+                        <td>${course.name}</td>
+                        <td contenteditable="true"></td>
+                    </tr>`;
+                });
+            }
+        }
+        reportDiv.innerHTML += "</table>";
     });
 }
 
-function addCourse() {
-    const title = document.getElementById("newCourseTitle").value.trim();
-    const desc = document.getElementById("newCourseDesc").value.trim();
-    const limit = parseInt(document.getElementById("newCourseLimit").value.trim());
-    const grades = document.getElementById("newCourseGrades").value.trim().split(",").map(g=>g.trim());
-    if(!title || !desc || !limit || grades.length===0){ alert("모든 필드 입력 필요"); return; }
-    const newId = courseData.length ? Math.max(...courseData.map(c=>c.id)) + 1 : 1;
-    courseData.push({id:newId, title, desc, limit, grades, students:[], startTime:"2025-01-01 09:00", endTime:"2025-12-31 18:00"});
-    saveCourses();
-    renderAdminList();
-    alert("강좌 추가 완료!");
-}
-
-function deleteCourse() {
-    if(!currentAdminCourse){ alert("삭제할 강좌 선택"); return; }
-    if(confirm(`${currentAdminCourse.title} 삭제?`)){
-        courseData = courseData.filter(c => c.id !== currentAdminCourse.id);
-        saveCourses();
-        document.getElementById("adminCourseDetails").style.display = "none";
-        renderAdminList();
-    }
-}
-
-function saveCourseTime() {
-    const start = document.getElementById("startTime").value;
-    const end = document.getElementById("endTime").value;
-    if(!start || !end){ alert("날짜/시간 입력 필요"); return; }
-    currentAdminCourse.startTime = start.replace("T"," ");
-    currentAdminCourse.endTime = end.replace("T"," ");
-    saveCourses();
-    alert("기간 저장 완료");
-}
-
-function addStudentManual() {
-    const grade = document.getElementById("addGrade").value.trim();
-    const cls = document.getElementById("addClass").value.trim();
-    const name = document.getElementById("addName").value.trim();
-    if(!grade || !cls || !name){ alert("학년/반/학생명 입력 필요"); return; }
-    if(currentAdminCourse.students.some(s=>s.grade===grade && s.className===cls && s.name===name)){
-        alert("이미 신청된 학생"); return;
-    }
-    currentAdminCourse.students.push({grade, className:cls, name, time:new Date().toLocaleString()});
-    saveCourses();
-    renderStudentList();
-    alert("학생 추가 완료!");
-}
-
-// ---------- 관리자 공용 ----------
-function logoutAdmin() { location.href = "admin-login.html"; }
-function goStudentPage() { location.href = "index.html"; }
-
-function changePw() {
-    const oldPw = document.getElementById("oldPw").value;
-    const newPw = document.getElementById("newPw").value;
-    const saved = localStorage.getItem("adminPw") || "1234";
-    if(oldPw !== saved){ alert("기존 비밀번호 틀림"); return; }
-    localStorage.setItem("adminPw", newPw);
-    alert("비밀번호 변경 완료!");
-}
-
-// ---------- 초기 실행 (학생용) ----------
-function initCourseData() {
-    if(!localStorage.getItem("courseData") || JSON.parse(localStorage.getItem("courseData")).length===0){
-        localStorage.setItem("courseData", JSON.stringify(courseData));
-    }
+// 관리자 비밀번호 변경
+function changeAdminPw(newPw){
+    const user = auth.currentUser;
+    if(user){
+        user.updatePassword(newPw).then(()=>alert("비밀번호 변경 완료")).catch(err=>alert(err.message));
+    } else alert("로그인 후 이용해주세요.");
 }

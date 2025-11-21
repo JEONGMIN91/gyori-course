@@ -7,25 +7,22 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<h1 class="page-title">교리초 수강신청</h1>
+<h2>학생 수강신청</h2>
+<form id="loginForm">
+  <label>학년: <input type="number" id="grade" min="1" max="6" required></label><br>
+  <label>반: <input type="text" id="class" placeholder="예: 가반" required></label><br>
+  <label>이름: <input type="text" id="name" required></label><br>
+  <button type="button" onclick="studentLogin(
+    document.getElementById('grade').value,
+    document.getElementById('class').value,
+    document.getElementById('name').value
+  )">확인</button>
+</form>
 
-<div style="text-align:center; margin-bottom:15px;">
-  <button class="btn-red" onclick="location.href='admin-login.html'">관리자 로그인</button>
-</div>
-
-<div class="student-box">
-  <input type="text" id="studentGrade" placeholder="학년 (숫자만)">
-  <input type="text" id="studentClass" placeholder="반">
-  <input type="text" id="studentName" placeholder="학생명">
-  <button class="btn-blue" onclick="showCourses()">확인</button>
-</div>
-
-<!-- 수강신청 가능한 과목 리스트 -->
-<div id="courseList" class="course-grid"></div>
-
+<script src="js/config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="js/script.js"></script>
-<script>
-initCourseData(); // 초기 과목 데이터 세팅
-</script>
 </body>
 </html>

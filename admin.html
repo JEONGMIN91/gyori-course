@@ -7,55 +7,41 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<h1 class="page-title">관리자 페이지</h1>
+<h2>관리자 페이지</h2>
 
-<div style="text-align:right; margin-bottom:10px;">
-  <button class="btn-red" onclick="logoutAdmin()">로그아웃</button>
-  <button class="btn-blue" onclick="goStudentPage()">학생용 화면</button>
+<!-- 로그아웃 & 학생용 화면 버튼 -->
+<button onclick="logout()">로그아웃</button>
+<button onclick="location.href='index.html'">학생용 화면</button>
+
+<h3>과목 관리</h3>
+<div>
+  <input type="text" id="newCourseName" placeholder="과목명">
+  <input type="number" id="newCourseMax" placeholder="정원">
+  <input type="text" id="newCourseGrade" placeholder="학년(쉼표로 구분)">
+  <button onclick="addCourse(
+    document.getElementById('newCourseName').value,
+    document.getElementById('newCourseMax').value,
+    document.getElementById('newCourseGrade').value.split(',')
+  )">과목 추가</button>
 </div>
 
-<div id="adminCourseList" class="course-grid"></div>
+<h3>월별 출석부</h3>
+<select id="monthSelect"></select>
+<button onclick="generateMonthlyReport(document.getElementById('monthSelect').value)">출석부 생성</button>
+<div id="report"></div>
 
-<div class="admin-panel">
-<h2>강좌 관리</h2>
-<div class="student-box">
-<input type="text" id="newCourseTitle" placeholder="강좌명">
-<input type="text" id="newCourseDesc" placeholder="설명">
-<input type="number" id="newCourseLimit" placeholder="정원" min="1">
-<input type="text" id="newCourseGrades" placeholder="학년(쉼표로 구분, ex:1,2)">
-<button class="btn-green" onclick="addCourse()">강좌 추가</button>
-</div>
-</div>
-
-<div id="adminCourseDetails" class="admin-panel" style="display:none;">
-<h2 id="adminCourseTitle"></h2>
-<p id="adminCourseDesc"></p>
-<p><strong>정원:</strong> <span id="adminCourseLimit"></span></p>
-<p><strong>신청자 수:</strong> <span id="adminCourseCount"></span></p>
-<h3>신청자 목록</h3>
-<ul id="adminStudentList" class="admin-list"></ul>
-
-<h3>수강신청 기간 설정</h3>
-<input type="datetime-local" id="startTime" value="">
-<input type="datetime-local" id="endTime" value="">
-<button class="btn-green" onclick="saveCourseTime()">저장</button>
-
-<h3>학생 수동 추가</h3>
-<div class="student-box">
-<input type="text" id="addGrade" placeholder="학년">
-<input type="text" id="addClass" placeholder="반">
-<input type="text" id="addName" placeholder="학생명">
-<button class="btn-blue" onclick="addStudentManual()">추가</button>
-</div>
-
-<h3>과목 삭제</h3>
-<button class="btn-red" onclick="deleteCourse()">강좌 삭제</button>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="js/script.js"></script>
 <script>
-renderAdminList();
+  // 월 선택 옵션 생성
+  for(let i=1;i<=12;i++){
+    monthSelect.innerHTML += `<option value="${i}">${i}월</option>`;
+  }
 </script>
+
+<script src="js/config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="js/script.js"></script>
 </body>
 </html>
